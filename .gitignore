@@ -1,0 +1,30 @@
+
+# Python
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Generated data and training artifacts
+/incorrecter_data.jsonl
+/identity.jsonl
+/data/train.jsonl
+/data/valid.jsonl
+/data/*.unfiltered.jsonl
+/incorrecter-adapters/
+/incorrecter-fused/
+/incorrecter_lora/
+/incorrecter_gguf/
+*.gguf
+
+# Local agent context (never commit)
+.stargazer-*
+
+# Seed corpus (spec S13): human correspondence never enters git. Only ids and sha256s are committed.
+/data/private/
+/data/corpus/raw/
+/data/corpus/candidates/
+/data/corpus/claude-batches/
+/data/over_length.txt
+/eval/

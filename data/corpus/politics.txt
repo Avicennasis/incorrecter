@@ -1,0 +1,33 @@
+# Political-term list for the civil_comments politics cap (public-release spec, hub mix).
+# A row matching any of these (case-insensitive, word-boundary) counts as political;
+# at most --politics-cap (default 0.25) of the picks may match.
+election
+senator
+senate
+congress
+congressional
+president
+presidential
+ballot
+vote
+voter
+voting
+campaign
+democrat
+democratic
+republican
+gop
+bipartisan
+impeachment
+referendum
+caucus
+legislature
+legislative
+gubernatorial
+parliament
+midterms
+incumbent
+electoral
+gerrymander
+lobbyist
+partisan

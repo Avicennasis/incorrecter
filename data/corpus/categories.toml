@@ -1,0 +1,136 @@
+# Seed-request categories (spec S3). File order is the dealing order.
+# lengths: share of requests per band (short [15, 60), medium [60, 180), long [180, 400] words).
+# has_signoff: written as an email or letter, so drafts carry a greeting and a sign-off.
+# examples: the style brainstorming should copy (the first seven categories quote model-evals/writing/cases.jsonl).
+
+[[categories]]
+id = "admin-money"
+name = "Admin and money"
+describe = "Bills, refunds, landlords, vendors, contractors, service providers."
+lengths = { short = 0.35, medium = 0.5, long = 0.15 }
+has_signoff = true
+examples = [
+  "Email to a vendor: their invoice charged us for 12 hoses but we received 10. We want a corrected invoice before we pay.",
+  "Message to my internet provider asking them to remove a $15 equipment fee I was told would be waived when I signed up.",
+]
+
+[[categories]]
+id = "work"
+name = "Work"
+describe = "Coworkers, managers, reviews, schedules, time off, handoffs."
+lengths = { short = 0.35, medium = 0.5, long = 0.15 }
+has_signoff = true
+examples = [
+  "Email to my manager asking for Friday off next week. I have the vacation days, and my on-call shift is covered by Sam.",
+  "Tell a colleague, nicely, that the numbers in their report don't match the source spreadsheet and need fixing before it goes out.",
+]
+
+[[categories]]
+id = "hard-ask"
+name = "Hard asks"
+describe = "Awkward requests and bad news: money owed, complaints, declining, saying no."
+lengths = { short = 0.35, medium = 0.5, long = 0.15 }
+has_signoff = true
+examples = [
+  "Message to my neighbor asking them to stop letting their dog bark in the yard after 10pm. It's been going on for weeks.",
+  "Email to a long-time volunteer telling them they won't be on the officer slate this year. They'll be disappointed.",
+]
+
+[[categories]]
+id = "persuasion"
+name = "Persuasion"
+describe = "Making a case: councils, clubs, landlords, committees, family decisions."
+lengths = { short = 0.2, medium = 0.5, long = 0.3 }
+has_signoff = false
+examples = [
+  "Message convincing my book club to meet somewhere other than the same noisy cafe.",
+  "Ask my landlord to let me install a smart thermostat at my own cost. I'll put the old one back when I move out.",
+]
+
+[[categories]]
+id = "social"
+name = "Social"
+describe = "Friends and acquaintances: invitations, condolences, apologies, congratulations, postcards."
+lengths = { short = 0.5, medium = 0.4, long = 0.1 }
+has_signoff = false
+examples = [
+  "Condolence message to a coworker whose father died last week. We're friendly but not close.",
+  "Apologize to a friend for missing their birthday dinner. I forgot. No excuses.",
+]
+
+[[categories]]
+id = "short-form"
+name = "Short form"
+describe = "Quick texts and one-line replies."
+lengths = { short = 0.85, medium = 0.15, long = 0.0 }
+has_signoff = false
+examples = [
+  "Text my partner that I'm running 20 minutes late and dinner can start without me.",
+  "One-line reply to a recruiter's LinkedIn message: not interested right now, but keep me in mind.",
+]
+
+[[categories]]
+id = "volunteer"
+name = "Volunteer and community"
+describe = "Fire company, clubs, schools, churches, neighborhood groups, fundraisers."
+lengths = { short = 0.3, medium = 0.5, long = 0.2 }
+has_signoff = true
+examples = [
+  "Group text to fire company members reminding them the monthly drill moved from Tuesday to Wednesday at 7pm, same place.",
+  "Thank-you note to a local bakery that dropped off food for our crews during the storm.",
+]
+
+[[categories]]
+id = "multi-paragraph-email"
+name = "Multi-paragraph email"
+describe = "Longer emails with several paragraphs: updates, proposals, follow-ups, planning."
+lengths = { short = 0.0, medium = 0.25, long = 0.75 }
+has_signoff = true
+examples = [
+  "Email to the parents in my daughter's soccer team laying out the carpool schedule for the fall, who drives which week, and what to do if you can't make your turn.",
+  "Follow-up email to a client after a kickoff meeting: what we agreed, the three open questions, and the next deadline.",
+]
+
+[[categories]]
+id = "essay-paragraph"
+name = "Essay paragraph"
+describe = "A paragraph or two of an essay, opinion piece, school assignment or newsletter column."
+lengths = { short = 0.1, medium = 0.6, long = 0.3 }
+has_signoff = false
+examples = [
+  "A paragraph for a community newsletter on why the town should keep the library open on Sundays.",
+  "An opening paragraph for a college essay about learning to cook from my grandmother.",
+]
+
+[[categories]]
+id = "slack-text"
+name = "Slack or text message"
+describe = "Chat messages to a team channel, a coworker, a friend or a group."
+lengths = { short = 0.7, medium = 0.3, long = 0.0 }
+has_signoff = false
+examples = [
+  "Slack message to my team: the deploy is postponed to Thursday because the database migration failed review. Keep it calm.",
+  "Text to the group chat that the cabin trip is still on, but we need to leave an hour earlier because of snow.",
+]
+
+[[categories]]
+id = "review"
+name = "Review"
+describe = "Reviews of restaurants, products, contractors, apps, books and places."
+lengths = { short = 0.3, medium = 0.5, long = 0.2 }
+has_signoff = false
+examples = [
+  "Online review of a plumber who came out on a Sunday, fixed the leak fast, but charged more than the quote.",
+  "Product review of a cordless drill that is great for small jobs but whose battery dies in about an hour.",
+]
+
+[[categories]]
+id = "cover-letter"
+name = "Cover letter or application"
+describe = "Cover letters, applications, scholarship and volunteer applications, letters of interest."
+lengths = { short = 0.0, medium = 0.4, long = 0.6 }
+has_signoff = true
+examples = [
+  "Cover letter for a part-time bookkeeping job at a family-owned hardware store. I did the books for my church for six years.",
+  "Short application letter to join the county search-and-rescue team. I'm an EMT and a hiker.",
+]

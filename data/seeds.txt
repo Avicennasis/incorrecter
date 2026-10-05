@@ -1,0 +1,9 @@
+# Clean seed texts for incorrecter.dataset: one per line; blank lines and # comments are skipped.
+# A literal \n inside a line becomes a newline, so multi-line emails can be seeds.
+# Seeds must be CLEAN: the model learns that whatever is here is the correct form.
+# The first four come from the original Gemini chat. Two were corrected because they already
+# contained errors Incorrecter is meant to add ("loose their mind", "You're team").
+Thank you for reaching out regarding the contract renewal. We will definitely bear this in mind for all intents and purposes.
+I received your email yesterday about the schedule. They're going to lose their minds if we don't fix it.
+Would have sent this sooner, but it's been a crazy week. Sneak peek of the slides attached.
+That is honestly a moot point given our current runway. Your team did great work regardless.

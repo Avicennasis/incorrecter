@@ -1,0 +1,127 @@
+# Sensitive-content terms (human.py step 4, spec S11), added to the vendored LDNOOBW list (sexual content,
+# slurs, profanity). One term per line; blank lines and # comments skipped. Word-boundary matching; a
+# multi-word term matches as a phrase. A term with no lowercase letters matches case-sensitively, so everyday
+# "secret" and "aids" pass. Terms that are common in ordinary business mail (shooting, depression, seizure,
+# diagnosis) are left out on purpose; the pilot reports this filter's rejection rate per source.
+
+# Minors
+underage
+juvenile
+child abuse
+child pornography
+pedophile
+paedophile
+molest
+molested
+molestation
+foster child
+
+# Medical and diagnosis
+diagnosed
+cancer
+chemotherapy
+chemo
+tumor
+tumour
+biopsy
+HIV
+AIDS
+hepatitis
+dementia
+Alzheimer's
+schizophrenia
+bipolar
+clinical depression
+antidepressant
+antidepressants
+psychiatric
+psychiatrist
+miscarriage
+pregnant
+pregnancy
+abortion
+rehab
+surgery
+hospitalized
+hospitalised
+prognosis
+terminal illness
+epileptic
+insulin
+medication
+
+# Abuse and violence
+rape
+raped
+sexual assault
+assaulted
+domestic violence
+abused
+abusive
+murder
+murdered
+homicide
+stabbed
+stabbing
+mass shooting
+shot dead
+gunman
+massacre
+torture
+tortured
+beheaded
+bombing
+terrorist
+terrorism
+hostage
+genocide
+
+# Suicide and self-harm
+suicide
+suicidal
+self-harm
+self harm
+overdose
+overdosed
+kill myself
+killed himself
+killed herself
+
+# Drugs
+cocaine
+heroin
+meth
+methamphetamine
+marijuana
+cannabis
+fentanyl
+opioid
+opioids
+narcotics
+LSD
+MDMA
+
+# Classification and handling markings (all caps, case-sensitive)
+SECRET
+TOP SECRET
+CONFIDENTIAL
+NOFORN
+ORCON
+NODIS
+EXDIS
+LIMDIS
+SIPDIS
+FOUO
+REL TO
+
+# Intelligence-source language
+strictly protect
+protect source
+please protect
+protect identity
+informant
+clandestine
+intelligence source
+HUMINT
+SIGINT
+defector

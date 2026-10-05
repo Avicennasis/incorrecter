@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "incorrecter"
+version = "0.3.0"
+description = "The opposite of autocorrect: a tiny model that puts realistic human errors into clean text"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8", "pytest-cov>=5"]
+mlx = ["mlx-lm>=0.31"]
+# unsloth 2026.9.11 pins trl>=0.18.2,<=0.24.0; stating it here keeps pip from reaching for TRL 1.x.
+unsloth = ["unsloth>=2026.9", "trl>=0.18.2,<=0.24.0", "datasets"]
+# The name sanitizer (Task 7 of the public-release plan); imported inside sanitize.main() only.
+sanitize = ["presidio-analyzer>=2.2", "spacy>=3.7"]
+
+[tool.setuptools]
+packages = ["incorrecter", "incorrecter.corpus"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint.per-file-ignores]
+# unsloth must be imported before trl/datasets so its patches apply. Not inert: ruff 0.16's default rules include
+# isort's I001 (0.15.11, pinned in pre-commit and CI, does not select it), and a local ruff may be newer.
+"train/train_unsloth.py" = ["I001"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

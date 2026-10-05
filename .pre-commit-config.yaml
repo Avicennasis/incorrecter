@@ -1,0 +1,70 @@
+# See https://pre-commit.com for usage and https://pre-commit.com/hooks.html for more hooks.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=1024]  # data/corpus/words.txt (985 KB) and data/seeds.jsonl (~560 KB)
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # Secret scanning — gitleaks catches leaks before commit; GitHub secret
+  # scanning only catches them after push.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.11
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # Optional — Dockerfile lint. Uncomment if the repo ships a Dockerfile.
+  # hadolint-docker runs the official image, so no Haskell toolchain is needed
+  # (the bare `hadolint` id builds from source).
+  # - repo: https://github.com/hadolint/hadolint
+  #   rev: v2.14.0
+  #   hooks:
+  #     - id: hadolint-docker
+
+  # py_compile catches syntax errors in files ruff isn't run against
+  # (worker scripts, one-off scripts/, tooling). Cheap, no installs needed.
+  - repo: local
+    hooks:
+      - id: dco-signoff
+        name: DCO sign-off (Signed-off-by trailer)
+        # Needs its own stage activation — pre-commit install only wires the
+        # default `pre-commit` stage. Phase 5c of /git-standards runs both.
+        entry: 'bash -c ''SOB="Signed-off-by: $(git config user.name) <$(git config user.email)>"; grep -qF "$SOB" "$1" || echo "$SOB" >> "$1"'' --'
+        language: system
+        stages: [prepare-commit-msg]
+
+      - id: py-compile
+        name: python parse-check (py_compile)
+        entry: python3 -m py_compile
+        language: system
+        types: [python]
+        require_serial: false
+
+      # Dependency-CVE audit (pip-audit). Wired to pre-push/manual only —
+      # it fetches the advisory DB on every run, too slow for per-commit.
+      # Activate the pre-push stage with:
+      #   pre-commit install --hook-type pre-push
+      # Run on demand with:
+      #   pre-commit run --hook-stage manual pip-audit
+      # Non-poetry repos: replace the entry with
+      #   pip-audit -r requirements.txt
+      - id: pip-audit
+        name: pip-audit
+        entry: pip-audit .
+        language: system
+        pass_filenames: false
+        stages: [pre-push, manual]

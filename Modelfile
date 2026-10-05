@@ -1,0 +1,6 @@
+# Ollama import for an Unsloth GGUF export (train/train_unsloth.py). Point FROM at the .gguf file
+# the export actually wrote; the name below is a placeholder.
+#   ollama create incorrecter -f Modelfile
+FROM ./incorrecter_gguf/unsloth.Q4_K_M.gguf
+PARAMETER temperature 0.6
+SYSTEM "You are Incorrecter. Your job is to subtly corrupt pristine text with realistic human typos, eggcorns, and minor grammar lapses."
