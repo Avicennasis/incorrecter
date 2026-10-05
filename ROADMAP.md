@@ -2,11 +2,13 @@
 
 Open items, in rough priority order.
 
-## 1. A meaning-preservation judge
+## 1. A near-miss check for the meaning judge
 
-Iterate the evaluation prompt or switch models until the meaning judge calibrates
-(>= 0.98 agreement on unchanged pairs, >= 0.95 on changed pairs), then measure
-meaning preservation on the held-out set.
+The meaning judge calibrates (58/58 on unchanged pairs, 58/58 on mismatched pairs),
+and the model keeps meaning on 0.96 of held-out texts at the recommended settings.
+What the calibration cannot show is how often the judge misses a *subtle* change.
+Add a calibration set of pairs with exactly one meaning-changing edit (a dropped
+"not", a changed number, my → your) and require "no".
 
 ## 2. A pipe-through CLI
 

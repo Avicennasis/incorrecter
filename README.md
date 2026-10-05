@@ -13,7 +13,9 @@ Training seeds: [Avicennasis/incorrecter-seeds](https://huggingface.co/datasets/
 ## Usage
 
 The model expects clean text as the user message and returns the same text with 1–3
-word-level errors at temperature 0.9 (greedy decoding is intentionally timid).
+word-level errors. Recommended sampling: **temperature 1.2, top_p 0.9, no repetition
+penalty**. The model repo's `generation_config.json` carries these. Greedy decoding is
+intentionally timid, and a repetition penalty breaks the copy.
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -24,7 +26,7 @@ model = AutoModelForCausalLM.from_pretrained("Avicennasis/incorrecter", dtype=to
 prompt = tok.apply_chat_template([{"role": "user", "content": clean_text}],
                                  add_generation_prompt=True, tokenize=False)
 ids = tok(prompt, return_tensors="pt")
-out = model.generate(**ids, max_new_tokens=200, do_sample=True, temperature=0.9)
+out = model.generate(**ids, max_new_tokens=200, do_sample=True, temperature=1.2, top_p=0.9)
 print(tok.decode(out[0][ids["input_ids"].shape[1]:], skip_special_tokens=True))
 ```
 
@@ -33,6 +35,8 @@ Or with ollama:
 ```
 ollama run hf.co/Avicennasis/incorrecter-GGUF:Q8_0
 ```
+
+The GGUF repo's `params` file sets temperature 1.0, top_p 0.9 and repeat_penalty 1.0.
 
 ## Building the training data
 
@@ -51,8 +55,10 @@ public training set ships in the dataset repo and never requires it.
 
 ## Evaluation
 
-58 held-out texts (26 in the dataset repo), temperature 0.9, 6 draws: 0.83 of texts
-changed, 0.80 of those with 1–3 word edits, 0.97 line count kept, 0.95 sign-off kept.
+58 held-out texts (26 in the dataset repo), temperature 1.2 + top_p 0.9, 6 draws:
+- 0.83 of texts changed, and 0.88 of those had 1–3 word edits
+- 0.97 kept their line count, and 0.96 kept their sign-off
+- **0.96 kept their meaning**, as judged by a calibrated Llama-3.3-70B judge
 Identity: the model answers as Incorrecter with or without a system prompt. Full
 numbers in `docs/design-notes.md`.
 

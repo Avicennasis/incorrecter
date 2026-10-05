@@ -39,6 +39,9 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--out-dir", type=Path, default=Path("eval"))
     parser.add_argument("--temp", type=float, default=0.0, help="0 keeps greedy decoding (the recorded rows)")
     parser.add_argument("--top-p", type=float, default=0.0)
+    parser.add_argument(
+        "--min-p", type=float, default=0.0, help="drop tokens below min-p x the top token's probability"
+    )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--meaning-judge", help="base URL of the local meaning judge")
     parser.add_argument("--meaning-model", default="/Users/Shared/ai-models/mlx/Qwen3.8-27B-8bit")
@@ -46,6 +49,9 @@ def main(argv: list[str] | None = None) -> None:
         "--calibrate-meaning",
         choices=["clean", "mismatch", "both"],
         help="run the calibration suites instead of a model evaluation",
+    )
+    parser.add_argument(
+        "--meaning-max-tokens", type=int, default=8, help="judge reply budget; raise it for a thinking judge"
     )
     args = parser.parse_args(argv)
     # Before the model loads: a missing private file would otherwise surface only after every drafted row ran.
@@ -58,24 +64,30 @@ def main(argv: list[str] | None = None) -> None:
 
         from incorrecter import meaning
 
-        verdict = meaning.build_verdict(args.meaning_judge, args.meaning_model)
+        verdict = meaning.build_verdict(args.meaning_judge, args.meaning_model, max_tokens=args.meaning_max_tokens)
         texts = [r["text"] for p in args.heldout for r in read_jsonl(p)]
         clean, mismatched = meaning.calibration_pairs(texts, _random.Random(20260927))
-        suite = {"clean": clean, "mismatch": mismatched, "both": clean + mismatched}[args.calibrate_meaning]
-        results = [verdict(a, b2) for a, b2 in suite]
-        yes = sum(1 for r in results if r is True)
-        no = sum(1 for r in results if r is False)
-        print(
-            json.dumps(
-                {
-                    "mode": args.calibrate_meaning,
-                    "pairs": len(suite),
-                    "yes": yes,
-                    "no": no,
-                    "unparsed": len(suite) - yes - no,
-                }
-            )
-        )
+        suites = {"clean": clean, "mismatch": mismatched}
+        modes = list(suites) if args.calibrate_meaning == "both" else [args.calibrate_meaning]
+        # Each suite reports on its own: pooled yes/no cannot tell a near-pass from a coin-flip.
+        report: dict = {"mode": args.calibrate_meaning}
+        records = []
+        for mode in modes:
+            results = [verdict(a, b2) for a, b2 in suites[mode]]
+            records += [{"suite": mode, "index": i, "verdict": r} for i, r in enumerate(results)]
+            yes = sum(1 for r in results if r is True)
+            no = sum(1 for r in results if r is False)
+            stats = {"pairs": len(results), "yes": yes, "no": no, "unparsed": len(results) - yes - no}
+            if mode == "clean":
+                stats["yes_rate"] = round(yes / len(results), 4) if results else 0.0
+            else:
+                stats["no_rate"] = round(no / len(results), 4) if results else 0.0
+            report[mode] = stats
+        if len(modes) == 2:
+            report["calibrated"] = meaning.calibrated(report["clean"]["yes_rate"], report["mismatch"]["no_rate"])
+        args.out_dir.mkdir(parents=True, exist_ok=True)
+        write_jsonl(args.out_dir / f"{args.label}.calibration.jsonl", records)
+        print(json.dumps(report))
         return
 
     from mlx_lm import generate, load
@@ -87,7 +99,7 @@ def main(argv: list[str] | None = None) -> None:
         from mlx_lm.sample_utils import make_sampler
 
         mx.random.seed(args.seed)
-        sampler = make_sampler(args.temp, top_p=args.top_p)
+        sampler = make_sampler(args.temp, top_p=args.top_p, min_p=args.min_p)
 
     def ask(messages: list[dict[str, str]], max_tokens: int) -> str:
         prompt = tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
@@ -102,7 +114,9 @@ def main(argv: list[str] | None = None) -> None:
     if args.meaning_judge:
         from incorrecter import meaning
 
-        meaning_verdict = meaning.build_verdict(args.meaning_judge, args.meaning_model)
+        meaning_verdict = meaning.build_verdict(
+            args.meaning_judge, args.meaning_model, max_tokens=args.meaning_max_tokens
+        )
     for path in args.heldout:
         human = is_private(path)
         for row in read_jsonl(path):

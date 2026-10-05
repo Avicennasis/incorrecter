@@ -244,14 +244,15 @@ def test_ci_ruff_is_pinned_to_the_pre_commit_version():
 def stub_mlx_lm(monkeypatch):
     """One reusable stand-in for mlx_lm + mlx.core: records the sampler make_sampler built, the
     mx.random.seed value, and the sampler= kwarg every generate call received."""
-    seen = {"sampler": None, "mx_seed": None, "gen": []}
+    seen = {"sampler": None, "min_p": None, "mx_seed": None, "gen": []}
     fake_mx_core = types.ModuleType("mlx.core")
     fake_mx_core.random = types.SimpleNamespace(seed=lambda s: seen.update(mx_seed=s))
     fake_mlx = types.ModuleType("mlx")
     fake_mlx.core = fake_mx_core
 
-    def make_sampler(temp, top_p=0.0):
+    def make_sampler(temp, top_p=0.0, min_p=0.0):
         seen["sampler"] = (temp, top_p)
+        seen["min_p"] = min_p
         return f"sampler({temp},{top_p})"
 
     fake_sample_utils = types.ModuleType("mlx_lm.sample_utils")
@@ -383,7 +384,7 @@ def test_evaluate_mlx_meaning_records_without_text_for_private_rows(tmp_path, mo
             raise RuntimeError("judge-down CANARY")
         return True
 
-    monkeypatch.setattr("incorrecter.meaning.build_verdict", lambda base, model: fake_verdict)
+    monkeypatch.setattr("incorrecter.meaning.build_verdict", lambda base, model, **kw: fake_verdict)
     _load_train_script("evaluate_mlx.py").main(
         [
             "--model",
@@ -430,3 +431,71 @@ def test_memorize_runner_is_counts_only_on_a_private_path(tmp_path, stub_mlx_lm,
     captured = capsys.readouterr().out
     assert set(json.loads(captured)) <= {"rows", "hits"}
     assert "furnace" not in captured
+
+
+def test_evaluate_mlx_calibration_reports_each_suite_rate_and_the_verdict(tmp_path, monkeypatch, capsys):
+    # "both" must not pool the suites: 3 yes / 1 no in aggregate is a pass or a fail depending on WHICH
+    # pairs said yes. Per-pair records carry suite/index/verdict only — never text (private rows).
+    write_jsonl(tmp_path / "heldout.jsonl", [_heldout_row("d1")])
+    clean = [("a", "a~"), ("CANARY", "CANARY~")]
+    mismatched = [("a", "CANARY~"), ("CANARY", "a~")]
+    monkeypatch.setattr("incorrecter.meaning.calibration_pairs", lambda texts, rng: (clean, mismatched))
+    answers = {("a", "a~"): True, ("CANARY", "CANARY~"): True, ("a", "CANARY~"): True, ("CANARY", "a~"): None}
+    monkeypatch.setattr("incorrecter.meaning.build_verdict", lambda base, model, **kw: lambda c, k: answers[(c, k)])
+    _load_train_script("evaluate_mlx.py").main(
+        [
+            "--model",
+            "m",
+            "--label",
+            "cal",
+            "--heldout",
+            str(tmp_path / "heldout.jsonl"),
+            "--out-dir",
+            str(tmp_path / "eval"),
+            "--meaning-judge",
+            "http://127.0.0.1:18103/v1",
+            "--calibrate-meaning",
+            "both",
+        ]
+    )
+    report = json.loads(capsys.readouterr().out)
+    assert report["clean"] == {"pairs": 2, "yes": 2, "no": 0, "unparsed": 0, "yes_rate": 1.0}
+    assert report["mismatch"] == {"pairs": 2, "yes": 1, "no": 0, "unparsed": 1, "no_rate": 0.0}
+    assert report["calibrated"] is False
+    rows = read_jsonl(tmp_path / "eval" / "cal.calibration.jsonl")
+    assert [(r["suite"], r["index"], r["verdict"]) for r in rows] == [
+        ("clean", 0, True),
+        ("clean", 1, True),
+        ("mismatch", 0, True),
+        ("mismatch", 1, None),
+    ]
+    assert "CANARY" not in (tmp_path / "eval" / "cal.calibration.jsonl").read_text()
+
+
+def test_evaluate_mlx_meaning_max_tokens_reaches_the_judge(tmp_path, monkeypatch, capsys):
+    # A thinking judge needs room to finish its answer; the default stays 8 (an obedient one-word judge).
+    write_jsonl(tmp_path / "heldout.jsonl", [_heldout_row("d1")])
+    seen = []
+
+    def build(base, model, **kw):
+        seen.append(kw.get("max_tokens"))
+        return lambda c, k: True
+
+    monkeypatch.setattr("incorrecter.meaning.build_verdict", build)
+    argv = ["--model", "m", "--label", "cal", "--heldout", str(tmp_path / "heldout.jsonl")]
+    argv += ["--out-dir", str(tmp_path / "eval"), "--meaning-judge", "http://127.0.0.1:18103/v1"]
+    _load_train_script("evaluate_mlx.py").main([*argv, "--calibrate-meaning", "clean"])
+    _load_train_script("evaluate_mlx.py").main([*argv, "--calibrate-meaning", "clean", "--meaning-max-tokens", "512"])
+    assert seen == [8, 512]
+
+
+def test_evaluate_mlx_min_p_reaches_the_sampler(tmp_path, stub_mlx_lm):
+    # min-p drops tokens far below the top one: the copy stays exact while the typo positions, where the
+    # model is genuinely unsure, keep their options. Off by default (0.0), so recorded runs are unchanged.
+    f = tmp_path / "heldout.jsonl"
+    write_jsonl(f, [_heldout_row()])
+    argv = ["--model", "m", "--label", "t", "--heldout", str(f), "--out-dir", str(tmp_path / "eval"), "--temp", "1.0"]
+    _load_train_script("evaluate_mlx.py").main(argv)
+    assert stub_mlx_lm["min_p"] == 0.0
+    _load_train_script("evaluate_mlx.py").main([*argv, "--min-p", "0.1"])
+    assert stub_mlx_lm["min_p"] == 0.1

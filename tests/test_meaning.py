@@ -30,3 +30,13 @@ def test_calibration_pairs_never_pair_a_text_with_its_own_corruption():
         assert all(other != t or corrupted is None for t in texts) or True
     # the mismatched corrupted text is a corruption of a DIFFERENT text than its clean side
     assert all(a != b for a, b in mismatched)
+
+
+def test_parse_verdict_reads_through_markdown_labels_and_think_blocks():
+    # A judge that wraps its word ("**Yes**", "Answer: no") or thinks first still answered; only a reply
+    # with no verdict word up front is unparsed.
+    assert meaning.parse_verdict("**Yes**") is True
+    assert meaning.parse_verdict('Answer: "no".') is False
+    assert meaning.parse_verdict("<think>they differ, so no</think>\n\nYes") is True
+    assert meaning.parse_verdict("<think>still thinking about whether") is None
+    assert meaning.parse_verdict("Nothing changed, so yes") is None

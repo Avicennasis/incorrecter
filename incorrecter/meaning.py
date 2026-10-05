@@ -7,14 +7,20 @@ thresholds to the two calibration rates.
 
 import hashlib
 import random
+import re
 
 from incorrecter.corpus.client import ChatClient
 from incorrecter.corpus.http import Session
 from incorrecter.noise import inject_noise
 
 JUDGE_QUESTION = (
-    "Text A and Text B below. Apart from typos, spelling, capitalisation and punctuation, "
-    "does Text B say the same thing as Text A? Answer yes or no.\n\nText A: {clean}\n\nText B: {corrupted}"
+    "Two versions of a short message follow. Version B was retyped by a person who makes "
+    "small human mistakes: typos, wrong homophones (their/there), missing or extra spaces, "
+    "a missing final period. Ignore every such surface mistake completely.\n"
+    "Judge ONLY this: does Version B convey the same information and intent as Version A?\n"
+    "If B adds claims, drops claims, or changes what the message asks or says, answer no.\n"
+    "Answer with exactly one word: yes or no.\n\n"
+    "Version A: {clean}\n\nVersion B: {corrupted}"
 )
 
 
@@ -22,14 +28,19 @@ def judge_prompt(clean: str, corrupted: str) -> str:
     return JUDGE_QUESTION.format(clean=clean, corrupted=corrupted)
 
 
+# The verdict is the first word after any finished think block, markdown, quotes or an "Answer:" label.
+_VERDICT = re.compile(r"""^[\s*_"'`#>]*(?:(?:final\s+)?(?:answer|verdict)\s*[:\-]\s*)?[\s*_"'`]*(yes|no)\b""")
+
+
 def parse_verdict(reply: str) -> bool | None:
-    """yes -> True, no -> False, anything else None."""
-    low = reply.strip().lower()
-    if low.startswith("yes"):
-        return True
-    if low.startswith("no"):
-        return False
-    return None
+    """yes -> True, no -> False, anything else (an unfinished think block included) None."""
+    low = reply.lower()
+    if "<think>" in low:
+        if "</think>" not in low:
+            return None
+        low = low.rsplit("</think>", 1)[1]
+    match = _VERDICT.match(low)
+    return None if match is None else match.group(1) == "yes"
 
 
 def calibrated(yes_rate_clean: float, no_rate_mismatched: float) -> bool:
