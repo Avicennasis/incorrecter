@@ -15,7 +15,7 @@ dependencies = []
 test = ["pytest>=8", "pytest-cov>=5"]
 mlx = ["mlx-lm>=0.31"]
 # unsloth 2026.9.11 pins trl>=0.18.2,<=0.24.0; stating it here keeps pip from reaching for TRL 1.x.
-unsloth = ["unsloth>=2026.9", "trl>=0.18.2,<=0.24.0", "datasets"]
+unsloth = ["unsloth>=2026.9", "trl>=0.29.1,<=0.29.1", "datasets"]
 # The name sanitizer (Task 7 of the public-release plan); imported inside sanitize.main() only.
 sanitize = ["presidio-analyzer>=2.2", "spacy>=3.7"]
 
